@@ -4,6 +4,7 @@
 !.env.deploy.example
 !.env.docker.example
 backend/.env
+!backend/.env.example
 .env.docker.deploy.tmp
 
 # ─── Dependencies ───
