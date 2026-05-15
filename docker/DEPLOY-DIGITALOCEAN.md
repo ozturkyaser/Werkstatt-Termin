@@ -63,7 +63,7 @@ chmod +x deploy-to-do.sh
    chmod +x start.sh && ./start.sh install-one
    ```
 
-   Dateien: `docker-compose.one.yml`, `docker/all-in-one.Dockerfile`. Logs: `./start.sh logs-one`, Wizard: `./start.sh wizard-hinweis-one`.
+   Dateien: `docker-compose.one.yml`, `Dockerfile` (Repo-Root). Logs: `./start.sh logs-one`, Wizard: `./start.sh wizard-hinweis-one`.
 6. **Firewall (UFW)**: Port 80 (und 443, falls du TLS vor dem Container terminierst) öffnen.
 7. **HTTPS**: entweder
    - einen **Load Balancer** mit Zertifikat davor, oder
@@ -96,12 +96,11 @@ HTTP_PORT=8080 docker compose up -d
 
 ## Variante B: DigitalOcean App Platform
 
-App Platform erwartet oft **ein** Dockerfile oder Buildpack. Dieses Repo liefert **zwei** Services (Web + API) per `docker-compose.yml` – ideal für einen **Droplet**. Für App Platform müsstest du entweder:
+Nutze das **Root-`Dockerfile`** (All-in-One: Nginx + Frontend-Build + Backend). In der App‑Komponente **Docker** wählen oder `dockerfile_path: Dockerfile` setzen; öffentlicher HTTP‑Port **8080** wie in der Oberfläche üblich.
 
-- nur den **Backend**-Service deployen und das Frontend extern hosten, oder
-- ein **kombiniertes** Image (nicht im Repo enthalten) bauen.
+App Platform unterstützt alternativ **zwei** Services per `docker-compose.yml` – bei nur **einer** Komponente ist das **Root‑Dockerfile** der passende Weg.
 
-Für den schnellsten Weg auf DO: **Droplet + Compose** wie oben.
+Für wenig Oberflächen-Fricke mit Volumes/Skripting: weiter **Droplet + Compose** wie oben.
 
 ---
 

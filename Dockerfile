@@ -1,4 +1,5 @@
-# Ein Container: Frontend (Nginx) + Backend (Node) – gleiche Funktion wie docker-compose.yml, nur ein Image.
+# Für DigitalOcean App Platform: Dockerfile im Repo-ROOT wird automatisch erkannt (kein Unterordner).
+# Ein Container: Frontend (Nginx) + Backend (Node).
 FROM node:20-bookworm-slim AS frontend-build
 WORKDIR /build
 COPY frontend/package.json frontend/package-lock.json ./

@@ -1,0 +1,18 @@
+# Beispiel-App-Spec für DigitalOcean App Platform.
+# Vorgehen: kopieren nach .do/app.yaml, repo/region anpassen und committen –
+# dann App mit Git-Spec neu verknüpfen oder unter App → Settings → App Spec aktivieren.
+# Siehe https://docs.digitalocean.com/products/app-platform/how-to/use-app-spec-on-git/
+
+name: werkstatt-termin
+region: fra
+services:
+  - name: app
+    github:
+      repo: DEIN-GITHUB-BENUTZERNAME/DEIN-REPO
+      branch: main
+      deploy_on_push: true
+    dockerfile_path: Dockerfile
+    # Muss zur internen Listener-Variable PORT passen (häufig 8080 auf App Platform)
+    http_port: 8080
+    instance_count: 1
+    instance_size_slug: apps-s-1vcpu-1gb
