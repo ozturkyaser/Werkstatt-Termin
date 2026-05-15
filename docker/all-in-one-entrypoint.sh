@@ -1,7 +1,11 @@
 #!/bin/sh
 set -eu
 
-(cd /app/backend && exec node src/index.js) &
+# Öffentlicher Port (DigitalOcean/App Platform injiziert PORT=8080 o.Ä. für den Router)
+PUBLIC_PORT="${PUBLIC_PORT:-${PORT:-80}}"
+sed -i "s/listen 80;/listen ${PUBLIC_PORT};/" /etc/nginx/conf.d/default.conf
+
+(cd /app/backend && NODE_ENV=production PORT=4100 exec node src/index.js) &
 NODE_PID=$!
 
 on_term() {

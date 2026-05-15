@@ -14,7 +14,6 @@ services:
         required: false
     environment:
       NODE_ENV: production
-      PORT: "4100"
       DATABASE_PATH: /app/data/werkstatt.sqlite
     ports:
       - "${HTTP_PORT:-80}:80"

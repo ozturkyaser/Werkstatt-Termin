@@ -29,13 +29,12 @@ COPY docker/all-in-one-entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh && mkdir -p /app/data
 
 ENV NODE_ENV=production
-ENV PORT=4100
 ENV DATABASE_PATH=/app/data/werkstatt.sqlite
 
 EXPOSE 80
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-  CMD wget -q -O /dev/null http://127.0.0.1/api/health || exit 1
+  CMD sh -c 'wget -q -O /dev/null "http://127.0.0.1:${PORT:-80}/api/health" || exit 1'
 
 ENTRYPOINT ["dumb-init", "--"]
 CMD ["/entrypoint.sh"]
