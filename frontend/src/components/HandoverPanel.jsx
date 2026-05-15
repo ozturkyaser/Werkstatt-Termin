@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api, getToken } from '../lib/api';
+import { api, apiAbsoluteUrl, getToken } from '../lib/api';
 import HandoverDialog from './HandoverDialog';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -28,7 +28,7 @@ export default function HandoverPanel({ appointment, onChange }) {
   function openPrint() {
     const token = getToken();
     const w = window.open('', '_blank');
-    fetch(`/api/handovers/print/${appointment.id}`, { headers: { Authorization: `Bearer ${token}` } })
+    fetch(apiAbsoluteUrl(`/api/handovers/print/${appointment.id}`), { headers: { Authorization: `Bearer ${token}` } })
       .then((r) => r.text())
       .then((html) => { w.document.open(); w.document.write(html); w.document.close(); });
   }

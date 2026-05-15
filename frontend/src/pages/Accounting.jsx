@@ -13,7 +13,7 @@ import {
   Cell,
 } from 'recharts';
 import Modal from '../components/Modal';
-import { api, formatCurrency } from '../lib/api';
+import { api, apiAbsoluteUrl, formatCurrency } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 
 const MONTHS_SHORT = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
@@ -54,7 +54,7 @@ export default function Accounting() {
 
   function downloadCsv() {
     const token = localStorage.getItem('werkstatt_token');
-    fetch(`/api/expenses/export/csv?year=${year}`, {
+    fetch(apiAbsoluteUrl(`/api/expenses/export/csv?year=${year}`), {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => r.blob())
@@ -589,7 +589,7 @@ function DatevExportDialog({ year, onClose }) {
     setLoading(true); setMsg(null);
     try {
       const token = localStorage.getItem('werkstatt_token');
-      const r = await fetch('/api/datev/export', {
+      const r = await fetch(apiAbsoluteUrl('/api/datev/export'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ from, to, what }),

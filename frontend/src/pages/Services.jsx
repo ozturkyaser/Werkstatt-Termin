@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { api, formatCurrency } from '../lib/api';
+import { api, apiAbsoluteUrl, formatCurrency } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import Modal from '../components/Modal';
 import ServicesImportDialog from '../components/ServicesImportDialog';
@@ -38,10 +38,10 @@ export default function Services() {
           <div className="flex gap-2">
             <a
               className="btn-ghost"
-              href={`/api/services/export/csv?t=${Date.now()}`}
+              href={apiAbsoluteUrl(`/api/services/export/csv?t=${Date.now()}`)}
               onClick={async (e) => {
                 e.preventDefault();
-                const res = await fetch('/api/services/export/csv', {
+                const res = await fetch(apiAbsoluteUrl('/api/services/export/csv'), {
                   headers: { Authorization: `Bearer ${localStorage.getItem('werkstatt_token')}` },
                 });
                 const blob = await res.blob();

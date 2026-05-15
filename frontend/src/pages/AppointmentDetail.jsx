@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { api, formatCurrency, STATUS_LABELS } from '../lib/api';
+import { api, apiAbsoluteUrl, formatCurrency, STATUS_LABELS } from '../lib/api';
 import Modal from '../components/Modal';
 import AppointmentForm from '../components/AppointmentForm';
 import WorkLogPanel from '../components/WorkLogPanel';
@@ -61,7 +61,7 @@ export default function AppointmentDetail() {
                 const doc = await api.post(`/documents/from-appointment/${a.id}`, { type: 'rechnung' });
                 const token = localStorage.getItem('werkstatt_token');
                 const w = window.open('', '_blank');
-                const html = await (await fetch(`/api/documents/${doc.id}/print`, { headers: { Authorization: `Bearer ${token}` } })).text();
+                const html = await (await fetch(apiAbsoluteUrl(`/api/documents/${doc.id}/print`), { headers: { Authorization: `Bearer ${token}` } })).text();
                 w.document.open(); w.document.write(html); w.document.close();
               } catch (e) { alert('Fehler: ' + e.message); }
             }}
@@ -73,7 +73,7 @@ export default function AppointmentDetail() {
                 const doc = await api.post(`/documents/from-appointment/${a.id}`, { type: 'angebot' });
                 const token = localStorage.getItem('werkstatt_token');
                 const w = window.open('', '_blank');
-                const html = await (await fetch(`/api/documents/${doc.id}/print`, { headers: { Authorization: `Bearer ${token}` } })).text();
+                const html = await (await fetch(apiAbsoluteUrl(`/api/documents/${doc.id}/print`), { headers: { Authorization: `Bearer ${token}` } })).text();
                 w.document.open(); w.document.write(html); w.document.close();
               } catch (e) { alert('Fehler: ' + e.message); }
             }}

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { apiAbsoluteUrl } from '../lib/api';
 
 function randomHexSecret(len = 48) {
   const a = new Uint8Array(len / 2);
@@ -20,7 +21,7 @@ export default function SetupWizard() {
   const load = useCallback(async () => {
     setError('');
     const q = tokenInput.trim() ? `?token=${encodeURIComponent(tokenInput.trim())}` : '';
-    const r = await fetch(`/api/setup/status${q}`);
+    const r = await fetch(apiAbsoluteUrl(`/api/setup/status${q}`));
     const data = await r.json().catch(() => ({}));
     if (!r.ok) {
       setStatus(null);
@@ -58,7 +59,7 @@ export default function SetupWizard() {
     setError('');
     setSaving(true);
     try {
-      const r = await fetch('/api/setup/finish', {
+      const r = await fetch(apiAbsoluteUrl('/api/setup/finish'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: tokenInput.trim(), values }),

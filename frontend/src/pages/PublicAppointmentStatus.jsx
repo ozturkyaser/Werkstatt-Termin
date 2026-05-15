@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { STATUS_LABELS } from '../lib/api';
+import { STATUS_LABELS, apiAbsoluteUrl } from '../lib/api';
 
 export default function PublicAppointmentStatus() {
   const { token } = useParams();
@@ -10,7 +10,7 @@ export default function PublicAppointmentStatus() {
   const [err, setErr] = useState(null);
 
   useEffect(() => {
-    fetch(`/api/public/appointment-status/${encodeURIComponent(token || '')}`)
+    fetch(apiAbsoluteUrl(`/api/public/appointment-status/${encodeURIComponent(token || '')}`))
       .then((r) => r.json().then((j) => ({ ok: r.ok, j })))
       .then(({ ok, j }) => {
         if (!ok) { setErr(j.error || 'Fehler'); return; }

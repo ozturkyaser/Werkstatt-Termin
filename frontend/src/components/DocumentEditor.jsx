@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import Modal from './Modal';
-import { api, formatCurrency } from '../lib/api';
+import { api, apiAbsoluteUrl, formatCurrency } from '../lib/api';
 
 const TYPE_LABELS = {
   angebot: 'Angebot',
@@ -379,7 +379,7 @@ export default function DocumentEditor({ initial, onClose, onSaved }) {
               onClick={() => {
                 const token = localStorage.getItem('werkstatt_token');
                 const w = window.open('', '_blank');
-                fetch(`/api/documents/${initial.id}/print`, {
+                fetch(apiAbsoluteUrl(`/api/documents/${initial.id}/print`), {
                   headers: { Authorization: `Bearer ${token}` },
                 })
                   .then((r) => r.text())

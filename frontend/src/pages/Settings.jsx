@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api } from '../lib/api';
+import { api, getAssetsOrigin, getPublicApiBase } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 
 const PROVIDERS = [
@@ -672,9 +672,9 @@ function ApiKeys({ isAdmin }) {
           <div className="text-sm font-medium mb-1">Variante 1: JavaScript-Embed (empfohlen)</div>
           <pre className="bg-slate-900 text-slate-100 text-xs rounded-lg p-3 overflow-x-auto">
 {`<div id="werkstatt-termin"></div>
-<script src="${window.location.origin}/widget/widget.js"
+<script src="${getAssetsOrigin()}/widget/widget.js"
         data-key="wk_live_XXXX"
-        data-api="${window.location.origin}/api/public"
+        data-api="${getPublicApiBase()}"
         data-height="780"></script>`}
           </pre>
         </div>
@@ -682,7 +682,7 @@ function ApiKeys({ isAdmin }) {
         <div className="mb-4">
           <div className="text-sm font-medium mb-1">Variante 2: iFrame direkt</div>
           <pre className="bg-slate-900 text-slate-100 text-xs rounded-lg p-3 overflow-x-auto">
-{`<iframe src="${window.location.origin}/widget/embed.html?api_key=wk_live_XXXX"
+{`<iframe src="${getAssetsOrigin()}/widget/embed.html?api_key=wk_live_XXXX"
         width="100%" height="780" frameborder="0"></iframe>`}
           </pre>
         </div>
@@ -771,11 +771,11 @@ function PhoneAI({ data, setData, isAdmin }) {
           Gib der Telefon-KI folgende Funktionen frei (Tool-Calling). Jede ruft einen Endpunkt mit deinem API-Key auf:
         </p>
         <ol className="list-decimal ml-5 space-y-2 text-slate-700">
-          <li><code>get_services()</code> → <code>GET {window.location.origin}/api/public/services</code></li>
+          <li><code>get_services()</code> → <code>GET {getPublicApiBase()}/services</code></li>
           <li><code>check_availability(date, service_ids)</code> →
-            <code className="ml-1">GET /api/public/availability?date=&amp;service_ids=</code></li>
+            <code className="ml-1">GET {getPublicApiBase()}/availability?date=&amp;service_ids=</code></li>
           <li><code>create_booking(customer, vehicle, service_ids, start_time)</code> →
-            <code className="ml-1">POST /api/public/bookings</code></li>
+            <code className="ml-1">POST {getPublicApiBase()}/bookings</code></li>
         </ol>
         <div className="bg-slate-50 border rounded p-3 text-xs text-slate-600">
           Authentifizierung: Header <code>X-API-Key: wk_live_…</code>

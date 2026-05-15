@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api, getToken } from '../lib/api';
+import { api, apiAbsoluteUrl, getToken } from '../lib/api';
 import WorkLogStart from './WorkLogStart';
 import WorkLogFinish from './WorkLogFinish';
 import { format, parseISO } from 'date-fns';
@@ -33,7 +33,7 @@ export default function WorkLogPanel({ appointment, onChange }) {
   function openPrint() {
     const token = getToken();
     const w = window.open('', '_blank');
-    fetch(`/api/work-logs/print/${appointment.id}`, { headers: { Authorization: `Bearer ${token}` } })
+    fetch(apiAbsoluteUrl(`/api/work-logs/print/${appointment.id}`), { headers: { Authorization: `Bearer ${token}` } })
       .then((r) => r.text())
       .then((html) => { w.document.open(); w.document.write(html); w.document.close(); });
   }

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { api, formatCurrency } from '../lib/api';
+import { api, apiAbsoluteUrl, formatCurrency } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import DocumentEditor from '../components/DocumentEditor';
 
@@ -43,7 +43,7 @@ export default function Documents() {
   function printDoc(id) {
     const token = localStorage.getItem('werkstatt_token');
     const w = window.open('', '_blank');
-    fetch(`/api/documents/${id}/print`, {
+    fetch(apiAbsoluteUrl(`/api/documents/${id}/print`), {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => r.text())

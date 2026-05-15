@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import PhotoCapture from './PhotoCapture';
-import { api, getToken } from '../lib/api';
+import { api, apiAbsoluteUrl, getToken } from '../lib/api';
 
 const KINDS = [
   { id: 'annahme', label: 'Annahme / Vorschaden' },
@@ -24,7 +24,7 @@ export default function AppointmentPhotos({ appointmentId, onChange }) {
       const token = getToken();
       const next = {};
       for (const m of rows) {
-        const r = await fetch(`/api/appointments/${appointmentId}/media/${m.id}/raw`, {
+        const r = await fetch(apiAbsoluteUrl(`/api/appointments/${appointmentId}/media/${m.id}/raw`), {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (r.ok) next[m.id] = URL.createObjectURL(await r.blob());

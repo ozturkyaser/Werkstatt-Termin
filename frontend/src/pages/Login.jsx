@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { apiAbsoluteUrl } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 
 export default function Login() {
@@ -12,7 +13,7 @@ export default function Login() {
   const [setupOpen, setSetupOpen] = useState(false);
 
   useEffect(() => {
-    fetch('/api/setup/open')
+    fetch(apiAbsoluteUrl('/api/setup/open'))
       .then((r) => r.json())
       .then((d) => setSetupOpen(Boolean(d.setupRequired)))
       .catch(() => setSetupOpen(false));
