@@ -1,0 +1,44 @@
+# ─── Lokale Secrets & Deploy (nie committen) ───
+.env
+.env.*
+!.env.deploy.example
+!.env.docker.example
+backend/.env
+.env.docker.deploy.tmp
+
+# ─── Dependencies ───
+node_modules/
+**/node_modules/
+
+# ─── Builds ───
+frontend/dist/
+**/dist/
+
+# ─── Datenbank / Medien / Lokal-Daten ───
+backend/data/*
+!backend/data/.gitkeep
+*.sqlite
+*.sqlite-*
+
+# ─── Logs & Temp ───
+*.log
+/tmp/
+.tmp/
+
+# ─── OS ───
+.DS_Store
+Thumbs.db
+
+# ─── IDE / Editor ───
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+.cursor/
+
+# ─── Test / Coverage ───
+coverage/
+
+# ─── Optional: Env mit eigenem Namen ───
+# .env.production.local

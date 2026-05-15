@@ -1,0 +1,134 @@
+# Automatisches Deployment auf einen DigitalOcean-Droplet (Docker Compose).
+#
+# Einstellungen (Produktion): als GitHub Repository Secrets hinterlegen; bei jedem Lauf wird
+# optional .env.docker auf den Server geschrieben (siehe docker/DEPLOY-DIGITALOCEAN.md).
+#
+# Trigger: Push auf main oder manuell (workflow_dispatch).
+
+name: Deploy DigitalOcean
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-digitalocean
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      DO_HOST: ${{ secrets.DO_HOST }}
+      DO_SSH_USER: ${{ secrets.DO_SSH_USER }}
+      DO_APP_DIR: ${{ secrets.DO_APP_DIR }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Secrets prüfen
+        run: |
+          if [ -z "${DO_HOST:-}" ] || [ -z "${DO_SSH_USER:-}" ] || [ -z "${{ secrets.DO_SSH_PRIVATE_KEY }}" ]; then
+            echo "::error::Bitte GitHub Secrets setzen: DO_HOST, DO_SSH_USER, DO_SSH_PRIVATE_KEY (siehe docker/DEPLOY-DIGITALOCEAN.md)."
+            exit 1
+          fi
+
+      - name: SSH vorbereiten
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.DO_SSH_PRIVATE_KEY }}" > ~/.ssh/do_deploy
+          chmod 600 ~/.ssh/do_deploy
+          ssh-keyscan -H "${DO_HOST}" >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: Zielverzeichnis auf Droplet anlegen
+        run: |
+          set -euo pipefail
+          APP="${DO_APP_DIR:-/opt/werkstatt-termin}"
+          ssh -i ~/.ssh/do_deploy -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            "${DO_SSH_USER}@${DO_HOST}" "mkdir -p '${APP}'"
+
+      - name: .env.docker aus GitHub Secrets erzeugen (optional)
+        id: envsync
+        env:
+          JWT_SECRET: ${{ secrets.DO_JWT_SECRET }}
+          FRONTEND_URL: ${{ secrets.DO_FRONTEND_URL }}
+          WORKSHOP_NAME: ${{ secrets.DO_WORKSHOP_NAME }}
+          WORKSHOP_ADDRESS: ${{ secrets.DO_WORKSHOP_ADDRESS }}
+          WORKSHOP_PHONE: ${{ secrets.DO_WORKSHOP_PHONE }}
+          WORKSHOP_EMAIL: ${{ secrets.DO_WORKSHOP_EMAIL }}
+          SMTP_HOST: ${{ secrets.DO_SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.DO_SMTP_PORT }}
+          SMTP_SECURE: ${{ secrets.DO_SMTP_SECURE }}
+          SMTP_USER: ${{ secrets.DO_SMTP_USER }}
+          SMTP_PASS: ${{ secrets.DO_SMTP_PASS }}
+          SMTP_FROM: ${{ secrets.DO_SMTP_FROM }}
+          TWILIO_ACCOUNT_SID: ${{ secrets.DO_TWILIO_ACCOUNT_SID }}
+          TWILIO_AUTH_TOKEN: ${{ secrets.DO_TWILIO_AUTH_TOKEN }}
+          TWILIO_FROM_NUMBER: ${{ secrets.DO_TWILIO_FROM_NUMBER }}
+          TWILIO_WHATSAPP_FROM: ${{ secrets.DO_TWILIO_WHATSAPP_FROM }}
+        run: |
+          set -e
+          if [ -z "${JWT_SECRET:-}" ] || [ -z "${FRONTEND_URL:-}" ]; then
+            echo "sync=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::DO_JWT_SECRET und/oder DO_FRONTEND_URL nicht gesetzt – .env.docker auf dem Server wird nicht überschrieben (nur Code-Sync)."
+            exit 0
+          fi
+          export JWT_EXPIRES_IN="${JWT_EXPIRES_IN:-7d}"
+          export REMINDER_HOURS_BEFORE="${REMINDER_HOURS_BEFORE:-24}"
+          export PUBLIC_APP_URL="${PUBLIC_APP_URL:-}"
+          export WORKSHOP_NAME="${WORKSHOP_NAME:-Fast Cars Autohaus}"
+          export WORKSHOP_ADDRESS="${WORKSHOP_ADDRESS:-}"
+          export WORKSHOP_PHONE="${WORKSHOP_PHONE:-}"
+          export WORKSHOP_EMAIL="${WORKSHOP_EMAIL:-}"
+          export SMTP_HOST="${SMTP_HOST:-}"
+          export SMTP_PORT="${SMTP_PORT:-587}"
+          export SMTP_SECURE="${SMTP_SECURE:-false}"
+          export SMTP_USER="${SMTP_USER:-}"
+          export SMTP_PASS="${SMTP_PASS:-}"
+          export SMTP_FROM="${SMTP_FROM:-}"
+          export TWILIO_ACCOUNT_SID="${TWILIO_ACCOUNT_SID:-}"
+          export TWILIO_AUTH_TOKEN="${TWILIO_AUTH_TOKEN:-}"
+          export TWILIO_FROM_NUMBER="${TWILIO_FROM_NUMBER:-}"
+          export TWILIO_WHATSAPP_FROM="${TWILIO_WHATSAPP_FROM:-whatsapp:+14155238886}"
+          command -v envsubst >/dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq gettext-base; }
+          envsubst < docker/env.ci.template > .env.docker.ci
+          echo "sync=true" >> "$GITHUB_OUTPUT"
+
+      - name: Code per rsync auf Droplet
+        run: |
+          set -euo pipefail
+          APP="${DO_APP_DIR:-/opt/werkstatt-termin}"
+          RSYNC_SSH='ssh -i ~/.ssh/do_deploy -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes'
+          rsync -avz --delete \
+            -e "$RSYNC_SSH" \
+            --exclude '.git' \
+            --exclude '**/node_modules' \
+            --exclude 'frontend/dist' \
+            --exclude 'backend/data' \
+            --exclude '.env.docker' \
+            --exclude '.env' \
+            --exclude '.github' \
+            ./ "${DO_SSH_USER}@${DO_HOST}:${APP}/"
+
+      - name: .env.docker auf Droplet kopieren
+        if: steps.envsync.outputs.sync == 'true'
+        run: |
+          set -euo pipefail
+          APP="${DO_APP_DIR:-/opt/werkstatt-termin}"
+          scp -i ~/.ssh/do_deploy -o IdentitiesOnly=yes \
+            .env.docker.ci \
+            "${DO_SSH_USER}@${DO_HOST}:${APP}/.env.docker"
+
+      - name: Docker Compose auf Droplet ausführen
+        run: |
+          set -euo pipefail
+          APP="${DO_APP_DIR:-/opt/werkstatt-termin}"
+          ssh -i ~/.ssh/do_deploy -o IdentitiesOnly=yes \
+            "${DO_SSH_USER}@${DO_HOST}" \
+            "set -euo pipefail; cd '${APP}'; docker compose up -d --build --remove-orphans"

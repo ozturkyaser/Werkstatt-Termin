@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Termin online buchen</title>
+<style>
+  :root {
+    --primary: #1e40af;
+    --primary-hover: #1e3a8a;
+    --bg: #ffffff;
+    --text: #111827;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+    --ok: #059669;
+    --err: #dc2626;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 15px; line-height: 1.4; }
+  .wk { max-width: 560px; margin: 0 auto; padding: 20px; }
+  .wk h1 { font-size: 22px; margin: 0 0 6px; }
+  .wk .subtitle { color: var(--muted); margin-bottom: 20px; }
+  .wk-step { display: none; }
+  .wk-step.active { display: block; }
+  .wk label { display: block; font-weight: 500; margin: 12px 0 4px; font-size: 14px; }
+  .wk input, .wk select, .wk textarea {
+    width: 100%; padding: 10px 12px; border: 1px solid var(--border);
+    border-radius: 8px; font: inherit; background: #fff;
+  }
+  .wk input:focus, .wk select:focus, .wk textarea:focus {
+    outline: none; border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(30,64,175,0.1);
+  }
+  .wk .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .wk button {
+    background: var(--primary); color: #fff; border: 0;
+    padding: 12px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; font: inherit;
+  }
+  .wk button:hover { background: var(--primary-hover); }
+  .wk button.secondary { background: #fff; color: var(--text); border: 1px solid var(--border); }
+  .wk .actions { display: flex; justify-content: space-between; margin-top: 24px; gap: 12px; }
+  .wk .actions button { flex: 1; }
+  .wk .service {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .wk .service:hover { border-color: var(--primary); }
+  .wk .service.selected { border-color: var(--primary); background: #eff6ff; }
+  .wk .service h3 { margin: 0 0 4px; font-size: 15px; }
+  .wk .service small { color: var(--muted); }
+  .wk .service .price { font-weight: 600; }
+  .wk .slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+    gap: 8px; margin-top: 12px; }
+  .wk .slot {
+    padding: 10px; border: 1px solid var(--border); border-radius: 6px;
+    text-align: center; cursor: pointer; background: #fff; font-variant-numeric: tabular-nums;
+  }
+  .wk .slot:hover { border-color: var(--primary); background: #eff6ff; }
+  .wk .slot.selected { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .wk .msg { padding: 10px 12px; border-radius: 8px; margin: 12px 0; font-size: 14px; }
+  .wk .msg.err { background: #fee2e2; color: var(--err); }
+  .wk .msg.ok { background: #d1fae5; color: var(--ok); }
+  .wk .summary { background: #f9fafb; border-radius: 8px; padding: 16px; margin: 12px 0; }
+  .wk .summary dt { color: var(--muted); font-size: 13px; }
+  .wk .summary dd { margin: 0 0 8px; font-weight: 500; }
+  .wk .loading { text-align: center; padding: 20px; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wk">
+  <div id="wk-loading" class="loading">Lade…</div>
+  <div id="wk-content" style="display:none">
+    <h1 id="wk-title">Termin online buchen</h1>
+    <p class="subtitle" id="wk-subtitle"></p>
+
+    <!-- Schritt 1: Leistungen -->
+    <div class="wk-step active" data-step="1">
+      <label>Welche Leistung(en) benötigen Sie?</label>
+      <div id="wk-services"></div>
+      <div class="actions">
+        <button type="button" class="secondary" disabled>Zurück</button>
+        <button type="button" id="wk-next-1">Weiter</button>
+      </div>
+    </div>
+
+    <!-- Schritt 2: Slot -->
+    <div class="wk-step" data-step="2">
+      <label for="wk-date">Wunschdatum</label>
+      <input type="date" id="wk-date" />
+      <label style="margin-top:16px">Freie Uhrzeiten</label>
+      <div id="wk-slots" class="slots"></div>
+      <div id="wk-slots-msg" class="loading" style="display:none">Wähle zuerst ein Datum…</div>
+      <div class="actions">
+        <button type="button" class="secondary" data-back="1">Zurück</button>
+        <button type="button" id="wk-next-2">Weiter</button>
+      </div>
+    </div>
+
+    <!-- Schritt 3: Kunde + Fahrzeug -->
+    <div class="wk-step" data-step="3">
+      <div class="row">
+        <div><label>Vorname *</label><input id="wk-first"></div>
+        <div><label>Nachname *</label><input id="wk-last"></div>
+      </div>
+      <div class="row">
+        <div><label>E-Mail *</label><input type="email" id="wk-email"></div>
+        <div><label>Telefon *</label><input type="tel" id="wk-phone"></div>
+      </div>
+      <label>Kennzeichen *</label>
+      <input id="wk-plate" placeholder="B-AB 1234" style="text-transform:uppercase">
+      <div class="row">
+        <div><label>Marke</label><input id="wk-brand" placeholder="z.B. VW"></div>
+        <div><label>Modell</label><input id="wk-model" placeholder="z.B. Golf"></div>
+      </div>
+      <label>Anmerkungen (optional)</label>
+      <textarea id="wk-notes" rows="3" placeholder="Besonderheiten, Wünsche, Fehlerbeschreibung…"></textarea>
+      <div class="actions">
+        <button type="button" class="secondary" data-back="2">Zurück</button>
+        <button type="button" id="wk-submit">Termin verbindlich anfragen</button>
+      </div>
+    </div>
+
+    <!-- Schritt 4: Bestätigung -->
+    <div class="wk-step" data-step="4">
+      <div class="msg ok" id="wk-success-msg"></div>
+      <div class="summary">
+        <dl id="wk-summary"></dl>
+      </div>
+      <div class="actions">
+        <button type="button" class="secondary" onclick="location.reload()">Neue Buchung</button>
+      </div>
+    </div>
+
+    <div id="wk-error" class="msg err" style="display:none"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const qs = new URLSearchParams(location.search);
+  const apiKey = qs.get('api_key') || (window.__WK_API_KEY__);
+  const apiBase = qs.get('api') || (window.__WK_API__) || '/api/public';
+
+  if (!apiKey) {
+    document.getElementById('wk-loading').textContent = 'Konfigurationsfehler: API-Key fehlt.';
+    return;
+  }
+
+  const state = {
+    services: [], selectedServiceIds: [],
+    date: '', slot: null,
+    workshop: null,
+  };
+
+  function api(path, init = {}) {
+    return fetch(`${apiBase}${path}`, {
+      ...init,
+      headers: {
+        'X-API-Key': apiKey,
+        'Content-Type': 'application/json',
+        ...(init.headers || {}),
+      },
+    }).then(async (r) => {
+      const body = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(body.error || `HTTP ${r.status}`);
+      return body;
+    });
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('wk-error');
+    el.textContent = msg;
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display = 'none'; }, 6000);
+  }
+
+  function goto(step) {
+    document.querySelectorAll('.wk-step').forEach((s) =>
+      s.classList.toggle('active', s.dataset.step === String(step))
+    );
+  }
+
+  // Init
+  Promise.all([api('/workshop'), api('/services')])
+    .then(([ws, svcs]) => {
+      state.workshop = ws;
+      state.services = svcs;
+      document.getElementById('wk-title').textContent = ws.name;
+      document.getElementById('wk-subtitle').textContent =
+        `Online-Termin · Mindestvorlauf ${ws.min_lead_hours}h · bis zu ${ws.max_days_ahead} Tage im Voraus`;
+      renderServices();
+      document.getElementById('wk-loading').style.display = 'none';
+      document.getElementById('wk-content').style.display = 'block';
+      // Standarddatum: übermorgen
+      const d = new Date();
+      d.setDate(d.getDate() + 2);
+      document.getElementById('wk-date').value = d.toISOString().slice(0,10);
+      document.getElementById('wk-date').min = new Date().toISOString().slice(0,10);
+    })
+    .catch((err) => {
+      document.getElementById('wk-loading').textContent = `Fehler: ${err.message}`;
+    });
+
+  function renderServices() {
+    const container = document.getElementById('wk-services');
+    container.innerHTML = '';
+    const byCat = {};
+    for (const s of state.services) {
+      const cat = s.category || 'Sonstige';
+      (byCat[cat] = byCat[cat] || []).push(s);
+    }
+    for (const [cat, items] of Object.entries(byCat)) {
+      const h = document.createElement('h4');
+      h.textContent = cat;
+      h.style.margin = '16px 0 8px';
+      h.style.fontSize = '13px';
+      h.style.textTransform = 'uppercase';
+      h.style.color = 'var(--muted)';
+      container.appendChild(h);
+      for (const s of items) {
+        const el = document.createElement('div');
+        el.className = 'service';
+        el.innerHTML = `
+          <div>
+            <h3>${escapeHtml(s.name)}</h3>
+            <small>ca. ${s.duration_minutes} Min</small>
+          </div>
+          <div class="price">${s.price ? s.price.toFixed(2).replace('.',',') + ' €' : 'auf Anfrage'}</div>
+        `;
+        el.onclick = () => {
+          const i = state.selectedServiceIds.indexOf(s.id);
+          if (i >= 0) state.selectedServiceIds.splice(i,1);
+          else state.selectedServiceIds.push(s.id);
+          el.classList.toggle('selected');
+        };
+        container.appendChild(el);
+      }
+    }
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, (c) => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'
+    }[c]));
+  }
+
+  document.getElementById('wk-next-1').onclick = () => {
+    if (state.selectedServiceIds.length === 0) return showError('Bitte mindestens eine Leistung wählen.');
+    goto(2);
+    loadSlots();
+  };
+
+  document.getElementById('wk-date').onchange = loadSlots;
+
+  function loadSlots() {
+    state.slot = null;
+    const date = document.getElementById('wk-date').value;
+    if (!date) return;
+    state.date = date;
+    const slotsEl = document.getElementById('wk-slots');
+    slotsEl.innerHTML = '<div class="loading">Lade freie Termine…</div>';
+    api(`/availability?date=${date}&service_ids=${state.selectedServiceIds.join(',')}`)
+      .then((r) => {
+        if (r.closed) {
+          slotsEl.innerHTML = `<div class="msg err">Geschlossen${r.closure_reason ? ` (${r.closure_reason})` : ''}</div>`;
+          return;
+        }
+        if (!r.slots.length) {
+          slotsEl.innerHTML = '<div class="msg err">Keine freien Termine an diesem Tag.</div>';
+          return;
+        }
+        slotsEl.innerHTML = '';
+        for (const s of r.slots) {
+          const t = new Date(s.start_time).toTimeString().slice(0,5);
+          const btn = document.createElement('div');
+          btn.className = 'slot';
+          btn.textContent = t;
+          btn.onclick = () => {
+            slotsEl.querySelectorAll('.slot').forEach((x) => x.classList.remove('selected'));
+            btn.classList.add('selected');
+            state.slot = s;
+          };
+          slotsEl.appendChild(btn);
+        }
+      })
+      .catch((err) => { slotsEl.innerHTML = `<div class="msg err">${err.message}</div>`; });
+  }
+
+  document.getElementById('wk-next-2').onclick = () => {
+    if (!state.slot) return showError('Bitte Uhrzeit auswählen.');
+    goto(3);
+  };
+
+  document.querySelectorAll('[data-back]').forEach((b) => {
+    b.onclick = () => goto(b.dataset.back);
+  });
+
+  document.getElementById('wk-submit').onclick = () => {
+    const payload = {
+      customer: {
+        first_name: val('wk-first'),
+        last_name: val('wk-last'),
+        email: val('wk-email'),
+        phone: val('wk-phone'),
+      },
+      vehicle: {
+        license_plate: val('wk-plate'),
+        brand: val('wk-brand'),
+        model: val('wk-model'),
+      },
+      service_ids: state.selectedServiceIds,
+      start_time: state.slot.start_time,
+      notes: val('wk-notes'),
+      source: 'online',
+    };
+    if (!payload.customer.first_name || !payload.customer.last_name ||
+        !payload.customer.email || !payload.customer.phone || !payload.vehicle.license_plate) {
+      return showError('Bitte alle Pflichtfelder (*) ausfüllen.');
+    }
+    const btn = document.getElementById('wk-submit');
+    btn.disabled = true; btn.textContent = 'Sende…';
+    api('/bookings', { method: 'POST', body: JSON.stringify(payload) })
+      .then((r) => {
+        const msg = r.confirmation_status === 'pending'
+          ? 'Ihre Terminanfrage wurde registriert. Wir melden uns zur Bestätigung.'
+          : 'Ihr Termin wurde verbindlich gebucht!';
+        document.getElementById('wk-success-msg').textContent = msg;
+        const d = new Date(r.appointment.start_time);
+        const selectedNames = state.services
+          .filter((s) => state.selectedServiceIds.includes(s.id))
+          .map((s) => s.name).join(', ');
+        document.getElementById('wk-summary').innerHTML = `
+          <dt>Datum & Uhrzeit</dt>
+          <dd>${d.toLocaleString('de-DE', { dateStyle:'full', timeStyle:'short' })}</dd>
+          <dt>Leistungen</dt>
+          <dd>${escapeHtml(selectedNames)}</dd>
+          <dt>Fahrzeug</dt>
+          <dd>${escapeHtml(r.appointment.license_plate)}</dd>
+          <dt>Referenz</dt>
+          <dd><code>${r.reference}</code></dd>
+        `;
+        goto(4);
+      })
+      .catch((err) => { showError(err.message); })
+      .finally(() => { btn.disabled = false; btn.textContent = 'Termin verbindlich anfragen'; });
+  };
+
+  function val(id) { return document.getElementById(id).value.trim(); }
+})();
+</script>
+</body>
+</html>

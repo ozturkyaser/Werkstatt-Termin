@@ -1,0 +1,22 @@
+{
+  "name": "werkstatt-termin",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Terminkalender-System für Kfz-Werkstatt (Backend + Frontend)",
+  "scripts": {
+    "install:all": "npm install --prefix backend && npm install --prefix frontend",
+    "dev": "concurrently -n backend,frontend -c blue,green \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
+    "dev:backend": "npm run dev --prefix backend",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "seed": "npm run seed --prefix backend",
+    "build": "npm run build --prefix frontend",
+    "docker:up": "bash start.sh install",
+    "docker:down": "bash start.sh stop",
+    "docker:logs": "bash start.sh logs",
+    "deploy:do": "bash deploy-to-do.sh",
+    "deploy:wizard": "bash deploy-wizard.sh"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}

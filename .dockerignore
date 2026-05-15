@@ -1,0 +1,17 @@
+.git
+.gitignore
+**/.git
+**/node_modules
+frontend/dist
+backend/data
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+.env
+.env.*
+!.env.docker.example
+docs
+*.md
+!README.md
+.cursor
+terminals

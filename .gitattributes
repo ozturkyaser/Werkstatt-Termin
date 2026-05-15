@@ -1,0 +1,5 @@
+# Zeilenenden & Text (Team / GitHub)
+* text=auto eol=lf
+
+# Shell-Skripte immer LF
+*.sh text eol=lf
