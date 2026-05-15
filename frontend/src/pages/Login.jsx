@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
-import { apiAbsoluteUrl } from '../lib/api';
+import { apiAbsoluteUrl, isLikelyHtmlApiResponse } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 
 export default function Login() {
@@ -14,8 +14,19 @@ export default function Login() {
 
   useEffect(() => {
     fetch(apiAbsoluteUrl('/api/setup/open'))
-      .then((r) => r.json())
-      .then((d) => setSetupOpen(Boolean(d.setupRequired)))
+      .then(async (r) => {
+        const text = await r.text();
+        if (isLikelyHtmlApiResponse(r.headers.get('content-type'), text)) {
+          setSetupOpen(false);
+          return;
+        }
+        try {
+          const d = JSON.parse(text);
+          setSetupOpen(Boolean(d.setupRequired));
+        } catch {
+          setSetupOpen(false);
+        }
+      })
       .catch(() => setSetupOpen(false));
   }, []);
 

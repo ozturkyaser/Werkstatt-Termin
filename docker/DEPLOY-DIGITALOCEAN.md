@@ -49,11 +49,21 @@ chmod +x deploy-to-do.sh
    - [DigitalOcean: Docker auf Ubuntu](https://docs.digitalocean.com/products/droplets/how-to/install-docker/)
 3. Repository auf den Server klonen (oder Release-Zip entpacken).
 4. **Umgebung:** Wizard nutzen (ohne `.env.docker`) **oder** `cp .env.docker.example .env.docker` und Werte setzen.
-5. Start:
+5. Start (Standard: **web** + **backend**):
+
    ```bash
    chmod +x start.sh && ./start.sh
    ```
-   (alternativ: `docker compose up -d --build`)
+
+   Alternativ: `docker compose up -d --build`
+
+   **Ein Container** (Nginx + Frontend-Build + Backend im selben Image — Login & `/api` wie im Standard-Stack):
+
+   ```bash
+   chmod +x start.sh && ./start.sh install-one
+   ```
+
+   Dateien: `docker-compose.one.yml`, `docker/all-in-one.Dockerfile`. Logs: `./start.sh logs-one`, Wizard: `./start.sh wizard-hinweis-one`.
 6. **Firewall (UFW)**: Port 80 (und 443, falls du TLS vor dem Container terminierst) öffnen.
 7. **HTTPS**: entweder
    - einen **Load Balancer** mit Zertifikat davor, oder
@@ -69,6 +79,8 @@ Volume `werkstatt_data`: SQLite, **`runtime.config.json`** (Wizard), Setup-Marke
 ```bash
 docker compose exec backend node src/seed.js
 ```
+
+(Ein-Container-Stack: `docker compose -f docker-compose.one.yml exec app bash -lc 'cd /app/backend && node src/seed.js'`.)
 
 ### Port ändern
 

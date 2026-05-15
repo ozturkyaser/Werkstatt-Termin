@@ -22,6 +22,18 @@ export function getPublicApiBase() {
   return `${getAssetsOrigin()}/api/public`;
 }
 
+/** True wenn /api fälschlich die SPA (index.html) liefert – z. B. nur „serve“ ohne Backend. */
+export function isLikelyHtmlApiResponse(contentType, bodyText) {
+  const ct = contentType || '';
+  const t = (bodyText || '').trimStart();
+  return ct.includes('text/html') || t.startsWith('<!DOCTYPE') || t.startsWith('<html');
+}
+
+const MSG_NO_BACKEND = `Kein API-Server: Antworten kommen von der Web-Oberfläche (HTML), nicht vom Backend. Deployen Sie das Backend (Node) und/oder setzen Sie in der Build-Umgebung VITE_API_ORIGIN auf die öffentliche Backend-URL.`;
+
+const MSG_BACKEND_URL_WRONG =
+  'API liefert HTML statt JSON – Backend-URL prüfen (VITE_API_ORIGIN) und CORS (FRONTEND_URL) am Server.';
+
 export function getToken() {
   return localStorage.getItem(TOKEN_KEY);
 }
@@ -42,6 +54,10 @@ async function request(method, path, body) {
   });
 
   const text = await res.text();
+  if (isLikelyHtmlApiResponse(res.headers.get('content-type'), text)) {
+    throw new Error(API_ORIGIN ? MSG_BACKEND_URL_WRONG : MSG_NO_BACKEND);
+  }
+
   const data = text ? (() => { try { return JSON.parse(text); } catch { return text; } })() : null;
 
   if (!res.ok) {

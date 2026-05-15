@@ -4,6 +4,7 @@
 #   chmod +x start.sh && ./start.sh
 #
 # Alternativ: docker compose up -d --build
+# Ein Container (Nginx + Frontend + Backend): docker-compose.one.yml → ./start.sh install-one
 #
 # Ohne .env.docker: Einrichtungs-Wizard (Link in den Logs, ./start.sh wizard-hinweis).
 # Mit Datei: cp .env.docker.example .env.docker  (optional PUBLIC_APP_URL für Log-Link)

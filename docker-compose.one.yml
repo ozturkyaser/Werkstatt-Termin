@@ -1,0 +1,25 @@
+# Ein Service / ein Container: Nginx + gebautes Frontend + Node-Backend (wie Nginx proxy im Standard-Compose).
+#
+# Start:  docker compose -f docker-compose.one.yml up -d --build
+# Oder:  ./start.sh install-one
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/all-in-one.Dockerfile
+    restart: unless-stopped
+    env_file:
+      - path: .env.docker
+        required: false
+    environment:
+      NODE_ENV: production
+      PORT: "4100"
+      DATABASE_PATH: /app/data/werkstatt.sqlite
+    ports:
+      - "${HTTP_PORT:-80}:80"
+    volumes:
+      - werkstatt_data:/app/data
+
+volumes:
+  werkstatt_data:
