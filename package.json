@@ -14,7 +14,11 @@
     "docker:down": "bash start.sh stop",
     "docker:logs": "bash start.sh logs",
     "deploy:do": "bash deploy-to-do.sh",
-    "deploy:wizard": "bash deploy-wizard.sh"
+    "deploy:wizard": "bash deploy-wizard.sh",
+    "start": "serve -s frontend/dist -l tcp://0.0.0.0:${PORT:-8080}"
+  },
+  "dependencies": {
+    "serve": "^14.2.4"
   },
   "devDependencies": {
     "concurrently": "^9.1.0"
