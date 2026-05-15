@@ -142,7 +142,7 @@ DigitalOcean selbst hat **keinen** direkten Import der App-internen *Einstellung
 | `DO_TWILIO_*` | nein | optional SMS/WhatsApp |
 
 3. Auf dem Droplet muss der SSH-User **Docker** ausführen dürfen (`usermod -aG docker <user>` und neu einloggen).
-4. Workflow **„Deploy DigitalOcean“** läuft bei **Push auf `main`** oder manuell unter **Actions → Deploy DigitalOcean → Run workflow**.
+4. Workflow **„Deploy DigitalOcean“**: jederzeit manuell unter **Actions → Deploy DigitalOcean → Run workflow**. Automatisch bei **Push auf `main`** nur, wenn unter **Settings → Secrets and variables → Actions → Variables** die Variable **`DO_SSH_DEPLOY`** = **`true`** gesetzt ist (ohne sie entfällt der Lauf bei Push – vermeidet fehlgeschlagene Jobs ohne Droplet-Secrets, z. B. bei reiner App Platform).
 
 Was passiert:
 

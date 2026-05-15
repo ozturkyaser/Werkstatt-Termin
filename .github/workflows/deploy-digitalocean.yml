@@ -1,9 +1,13 @@
-# Automatisches Deployment auf einen DigitalOcean-Droplet (Docker Compose).
+# Automatisches Deployment auf einen DigitalOcean-Droplet (Docker Compose per SSH).
 #
-# Einstellungen (Produktion): als GitHub Repository Secrets hinterlegen; bei jedem Lauf wird
-# optional .env.docker auf den Server geschrieben (siehe docker/DEPLOY-DIGITALOCEAN.md).
+# Standard: Dieser Job läuft bei Push auf main NICHT, damit Builds ohne Droplet-Secrets
+# nicht rot werden (z. B. nur App Platform). Aktivieren:
+#   Repository → Settings → Secrets and variables → Actions → Variables:
+#   Name: DO_SSH_DEPLOY   Wert: true
+# Zusätzlich Secrets: DO_HOST, DO_SSH_USER, DO_SSH_PRIVATE_KEY (siehe docker/DEPLOY-DIGITALOCEAN.md).
+# Jederzeit manuell: Actions → „Deploy DigitalOcean“ → Run workflow.
 #
-# Trigger: Push auf main oder manuell (workflow_dispatch).
+# Trigger: optional Push auf main (nur wenn DO_SSH_DEPLOY=true), oder workflow_dispatch.
 
 name: Deploy DigitalOcean
 
@@ -22,15 +26,19 @@ concurrency:
 
 jobs:
   deploy:
+    # Ohne Variable: nur manueller Lauf; mit DO_SSH_DEPLOY=true auch bei Push auf main
+    if: ${{ github.event_name == 'workflow_dispatch' || vars.DO_SSH_DEPLOY == 'true' }}
     runs-on: ubuntu-latest
     env:
       DO_HOST: ${{ secrets.DO_HOST }}
       DO_SSH_USER: ${{ secrets.DO_SSH_USER }}
       DO_APP_DIR: ${{ secrets.DO_APP_DIR }}
+      # Node.js 24 für actions/checkout (Deprecation Node 20 auf Runnern)
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Secrets prüfen
         run: |
